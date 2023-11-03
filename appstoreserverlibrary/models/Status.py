@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class Status(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class Status(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     The status of an auto-renewable subscription.
     

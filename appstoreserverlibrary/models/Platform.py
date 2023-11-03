@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class Platform(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class Platform(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     The platform on which the customer consumed the in-app purchase.
     

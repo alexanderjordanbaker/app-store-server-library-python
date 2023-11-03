@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class LifetimeDollarsPurchased(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class LifetimeDollarsPurchased(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     A value that indicates the total amount, in USD, of in-app purchases the customer has made in your app, across all platforms.
     

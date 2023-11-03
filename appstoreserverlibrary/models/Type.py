@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class Type(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class Type(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     The type of in-app purchase products you can offer in your app.
     

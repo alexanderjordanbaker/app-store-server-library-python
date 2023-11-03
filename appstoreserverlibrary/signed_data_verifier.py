@@ -35,7 +35,7 @@ class SignedDataVerifier:
         enable_online_checks: bool,
         environment: Environment,
         bundle_id: str,
-        app_apple_id: str = None,
+        app_apple_id: int = None,
     ):
         self._chain_verifier = _ChainVerifier(root_certificates)
         self._environment = environment
@@ -51,7 +51,10 @@ class SignedDataVerifier:
         :return: The decoded renewal info after verification
         :throws VerificationException: Thrown if the data could not be verified
         """
-        return cattrs.structure(self._decode_signed_object(signed_renewal_info), JWSRenewalInfoDecodedPayload)
+        decoded_renewal_info = cattrs.structure(self._decode_signed_object(signed_renewal_info), JWSRenewalInfoDecodedPayload)
+        if decoded_renewal_info.environment != self._environment:
+            raise VerificationException(VerificationStatus.INVALID_ENVIRONMENT)
+        return decoded_renewal_info
 
     def verify_and_decode_signed_transaction(self, signed_transaction: str) -> JWSTransactionDecodedPayload:
         """

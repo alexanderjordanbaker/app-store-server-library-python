@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class UserStatus(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class UserStatus(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     The status of a customer's account within your app.
     

@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class ExtendReasonCode(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class ExtendReasonCode(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     The code that represents the reason for the subscription-renewal-date extension.
     

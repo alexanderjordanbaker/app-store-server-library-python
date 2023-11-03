@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class TransactionReason(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class TransactionReason(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     The cause of a purchase transaction, which indicates whether it’s a customer’s purchase or a renewal for an auto-renewable subscription that the system initiates.
     

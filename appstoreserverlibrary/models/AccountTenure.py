@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class AccountTenure(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class AccountTenure(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     The age of the customer's account.
     

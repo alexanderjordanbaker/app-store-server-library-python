@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class Environment(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class Environment(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     The server environment, either sandbox or production.
     

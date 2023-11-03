@@ -3,9 +3,10 @@
 import calendar
 import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Type, TypeVar, Union
-from attr import define
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+from attr import Attribute, define, fields, has
 import cattrs
+from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn, override
 import requests
 
 import jwt
@@ -94,11 +95,18 @@ class APIError(Enum):
 @define
 class APIException(Exception):
     http_status_code: int
-    api_error: APIError
+    api_error: Optional[APIError]
+    raw_api_error: Optional[int]
 
-    def __init__(self, http_status_code: int, api_error: APIError = None):
+    def __init__(self, http_status_code: int, raw_api_error: Optional[int] = None):
         self.http_status_code = http_status_code
-        self.api_error = api_error
+        self.raw_api_error = raw_api_error
+        self.api_error = None
+        try:
+            if raw_api_error is not None:
+                self.api_error = APIError(raw_api_error)
+        except ValueError:
+            pass
 
 class AppStoreServerAPIClient:
     def __init__(self, signing_key: bytes, key_id: str, issuer_id: str, bundle_id: str, environment: Environment):
@@ -127,32 +135,50 @@ class AppStoreServerAPIClient:
 
     def _make_request(self, path: str, method: str, queryParameters: Dict[str, Union[str, List[str]]], body, destination_class: Type[T]) -> T:
         url = self._base_url + path
-        json = cattrs.unstructure(body) if body != None else None
+        c = self._get_cattrs_converter(type(body)) if body != None else None
+        json = c.unstructure(body) if body != None else None
         headers = {
             'User-Agent': "app-store-server-library/python/0.1",
             'Authorization': 'Bearer ' + self._generate_token(),
             'Accept': 'application/json'
         }
         
-        response = requests.request(method, url, params=queryParameters, headers=headers, json=json)
+        response = self._execute_request(method, url, queryParameters, headers, json)
         if response.status_code >= 200 and response.status_code < 300:
             if destination_class == None:
                 return
+            c = self._get_cattrs_converter(destination_class)
             response_body = response.json()
-            return cattrs.structure(response_body, destination_class)
+            return c.structure(response_body, destination_class)
         else:
             # Best effort parsing of the response body
             if not 'content-type' in response.headers or response.headers['content-type'] != 'application/json':
                 raise APIException(response.status_code)
             try:
                 response_body = response.json()
-                errorValue = APIError(response_body['errorCode'])
-                raise APIException(response.status_code, errorValue)
+                raise APIException(response.status_code, response_body['errorCode'])
             except APIException as e:
                 raise e
             except Exception:
                 raise APIException(response.status_code)
 
+    def _execute_request(self, method: str, url: str, params: Dict[str, Union[str, List[str]]], headers: Dict[str, str], json: Dict[str, Any]) -> requests.Response:
+        return requests.request(method, url, params=params, headers=headers, json=json)
+    
+    def _get_cattrs_converter(self, destination_class: Type[T]) -> cattrs.Converter:
+        c = cattrs.Converter()
+        attributes: List[Attribute] = fields(destination_class)
+        cattrs_overrides = {}
+        for attribute in attributes:
+            if 'typeOfField' in attribute.metadata:
+                matching_name: str = attribute.metadata['correspondingFieldName']
+                if attribute.metadata['typeOfField'] == 'raw':
+                    cattrs_overrides[matching_name] = override(omit=True)
+                    raw_field = 'raw' + matching_name[0].upper() + matching_name[1:]
+                    cattrs_overrides[raw_field] = override(rename=matching_name)
+        c.register_structure_hook_factory(has, lambda cl: make_dict_structure_fn(cl, c, **cattrs_overrides))
+        c.register_unstructure_hook_factory(has, lambda cl: make_dict_unstructure_fn(cl, c, **cattrs_overrides))
+        return c
 
     def extend_renewal_date_for_all_active_subscribers(self, mass_extend_renewal_date_request: MassExtendRenewalDateRequest) -> MassExtendRenewalDateResponse: 
         """
@@ -163,7 +189,7 @@ class AppStoreServerAPIClient:
         :return: A response that indicates the server successfully received the subscription-renewal-date extension request.
         :throws APIException: If a response was returned indicating the request could not be processed
         """
-        return self._make_request("/inApps/v1/subscriptions/extend/mass/", "POST", {}, mass_extend_renewal_date_request, MassExtendRenewalDateResponse)
+        return self._make_request("/inApps/v1/subscriptions/extend/mass", "POST", {}, mass_extend_renewal_date_request, MassExtendRenewalDateResponse)
 
     def extend_subscription_renewal_date(self, original_transaction_id: str, extend_renewal_date_request: ExtendRenewalDateRequest) -> ExtendRenewalDateResponse:
         """

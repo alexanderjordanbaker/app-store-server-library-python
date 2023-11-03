@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class ConsumptionStatus(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class ConsumptionStatus(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     A value that indicates the extent to which the customer consumed the in-app purchase.
     

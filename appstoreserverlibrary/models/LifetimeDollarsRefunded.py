@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class LifetimeDollarsRefunded(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class LifetimeDollarsRefunded(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     A value that indicates the dollar amount of refunds the customer has received in your app, since purchasing the app, across all platforms.
     

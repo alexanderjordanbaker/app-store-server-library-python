@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-class Subtype(Enum): 
+from .LibraryUtility import AppStoreServerLibraryEnumMeta
+
+class Subtype(Enum, metaclass=AppStoreServerLibraryEnumMeta):
     """
     A notification subtype value that App Store Server Notifications 2 uses.
     
